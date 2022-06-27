@@ -26,3 +26,6 @@ tree-sitter。_
 
 写完代码后，在`Normal`模式下执行`:CloseMdCode`命令或按`q`键，本插件会把代码插入
 源 markdown 文件中。
+
+一些 markdown 处理软件（如[pandoc](https://pandoc.org/)）支持使用类
+似`{.python .number}`语法添加行号，本插件对此做了适配，能够正确识别语言种类。

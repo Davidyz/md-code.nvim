@@ -5,6 +5,7 @@ M.opened_buffer = {}
 local default_config = {
   create_buffer_cmd = "vs",
   temp_path = "/tmp/",
+  filetypes = vim.fn.getcompletion("", "filetype"),
 }
 
 if vim.fn.isdirectory("/tmp/") == 1 then
@@ -42,19 +43,6 @@ M.md_code_bufferID = 0
 --- print("python")
 --- @end
 
---- fix the filetypes
-local filetypes = {
-  markdown = "md",
-  bash = "sh",
-}
-function M.getEditType(ty)
-  if filetypes[ty] == nil then
-    return ty
-  else
-    return filetypes[ty]
-  end
-end
-
 --- Get the lines in the codeblock and the filetype
 M.GetBufferCodeBlockType = function(line)
   local ty = ""
@@ -64,7 +52,7 @@ M.GetBufferCodeBlockType = function(line)
   local start = 0
 
   local filetypeBlock = {
-    begin = "```(%a+)",
+    begin = "```(.+)",
     done = "```",
   }
 
@@ -82,7 +70,10 @@ M.GetBufferCodeBlockType = function(line)
 
     if str_begin ~= nil and str_end ~= nil then
       -- find the filetype
-      ty = M.getEditType(buf_ftype)
+      ty = utils.find_ft(buf_ftype, configs.filetypes)
+      if ty == "" then
+        ty = "txt"
+      end
       start = line + 1
       vim.g.mdorg_indent = str_begin
       break
@@ -124,9 +115,11 @@ M.CreatedBufferEditCodeBlock = function(ty)
   M.OpenDir(configs.temp_path)
   local new_buf = nil
   if configs.create_buffer_cmd == "vs" then
-    vim.cmd("vsplit " .. configs.temp_path .. M.filename .. "." .. ty)
+    vim.cmd("vsplit " .. configs.temp_path .. M.filename .. "." .. utils.getSuffix(ty))
     M.module_status = true
-    vim.bo.filetype = ty
+    if utils.contains(configs.filetypes, ty) then
+      vim.bo.filetype = ty
+    end
     new_buf = vim.api.nvim_get_current_buf()
   end
   return new_buf
@@ -143,21 +136,9 @@ M.OpenDir = function(pathname)
   end
 end
 
---- separate a string.
----@param str string
----@param reps string
----@return table
-local function split(str, reps)
-  local resultStrList = {}
-  string.gsub(str, "[^" .. reps .. "]+", function(w)
-    table.insert(resultStrList, w)
-  end)
-  return resultStrList
-end
-
 --- Automatically save the code in the buffer
 M.CloseMdCode = function()
-  local file = split(vim.fn.expand("%:t"), ".")
+  local file = utils.split(vim.fn.expand("%:t"), ".")
   if vim.api.nvim__buf_stats(vim.g.Mbufferid) ~= 0 and file[1] == M.filename then
     M.ResCodeBlock()
     -- vim.cmd("silent augroup! AutoCloseMdorg")

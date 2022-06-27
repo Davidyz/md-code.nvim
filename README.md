@@ -32,3 +32,7 @@ will open a vertical split that contains the code inside the markdown codeblock:
 
 After you've finished editting, run command `:CloseMdCode` or press `q` in the
 code block buffer to save the code to the markdown document.
+
+You may also use this syntax `{.python .number}` to add line-number to the
+markdown file. This syntax is supported by [pandoc](https://pandoc.org/), a
+powerful document processing tool.
